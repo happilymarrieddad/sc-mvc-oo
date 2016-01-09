@@ -1,0 +1,38 @@
+{
+  "name": "SocketClusterMVCOO",
+  "description": "Socketcluster MVC Object Oriented",
+  "version": "2016.01.04",
+  "contributors": [
+    {
+      "name": "Jonathan Gros-Dubois",
+      "email": "grosjona@yahoo.com.au"
+    },
+    {
+      "name": "Nick Kotenberg",
+      "email": "nkotenberg@fusiontms.com"
+    }
+  ],
+  "dependencies": {
+    "body-parser": "^1.14.2",
+    "client-sessions": "^0.7.0",
+    "colors": "^1.1.2",
+    "connect": "3.0.1",
+    "express": "4.13.1",
+    "jade": "^1.11.0",
+    "minimist": "1.1.0",
+    "mysql": "^2.10.0",
+    "node-env-file": "^0.1.8",
+    "serve-static": "1.8.0",
+    "socketcluster": "4.x.x",
+    "socketcluster-client": "4.x.x",
+    "templatizer": "^1.5.4"
+  },
+  "keywords": [
+    "websocket",
+    "server",
+    "realtime",
+    "cluster",
+    "scalable"
+  ],
+  "readmeFilename": "README.md"
+}

@@ -1,0 +1,226 @@
+#!/usr/bin/env node
+ 
+/*
+|-----------------------------------------
+| Module Dependencies
+|-----------------------------------------
+*/
+var Command = require('commander').Command,
+    spawn = require('child_process').spawn,
+    exec = require('child_process').exec,
+    program = require('commander'),
+    colors = require('colors'),
+    async = require('async'),
+    version = '1.16.01.08',
+    fs = require('fs')
+require('node-env-file')(__dirname+'/.env')
+
+/*
+|-----------------------------------------
+| Display Functions
+|-----------------------------------------
+*/
+Command.prototype.helpInformation = function() {
+  console.log('SocketCluster MVC Framework'.green,'version',version)
+  console.log('')
+  console.log('Usage:'.yellow)
+  console.log('  command [option] [arguments]')
+  console.log('')
+  console.log('Options:'.yellow)
+  console.log('  -h, --help'.green,'                  Display this help message')
+  console.log('  -V, --version'.green,'               Display this help message')
+  console.log('')
+  console.log('Commands:'.yellow)
+  console.log('  rebuild'.green,'                     Rebuild node modules')
+  console.log('  serve'.green,'                       Serve the application')
+  console.log(' make'.yellow)
+  console.log('  make:controller [name]'.green,'-a'.yellow,'   Create a new controller | -a = allow all names')
+  console.log('  make:route [name]'.green,'-a'.yellow,'        Create a new route/controller/view | -a = allow all names')
+  return '\n'
+}
+var displayCommandError = function() {
+  program.help() 
+  console.log('')
+  console.log('Unknown command'.red,program.args[0])
+  console.log('')
+}
+
+/*
+|-----------------------------------------
+| Initial Setup
+|-----------------------------------------
+*/
+program
+  // Setup
+  .version(version)
+  .on('-V',program.version)
+
+/*
+|-----------------------------------------
+| Command: rebuild-modules
+|-----------------------------------------
+*/
+program
+  .command('rebuild')
+  .action(function (options) {
+    console.log('Removing modules...'.red);
+    exec('rm -rf ' + __dirname + '/node_modules',function(error,stdout,stderr) {
+      setTimeout(function() { console.log('Downloading/rebuilding modules...'.blue) },100)
+      exec('npm install',function(error,stdout,stderr) {
+        console.log('Done!'.green);
+      })
+    })
+  })
+
+/*
+|-----------------------------------------
+| Command: serve
+|-----------------------------------------
+*/
+program
+  .command('serve')
+  .action(function (options) {
+    console.log('Serve hasn\'t been properly implemented yet');
+    // Use spawn   http://stackoverflow.com/questions/10232192/exec-display-stdout-live
+    // maybe like save the process.id or something and kill it with a keyboard key or something...
+    // ls.pid = process id
+  })
+
+/*
+|-----------------------------------------
+| Command: make:controller / make:route
+|-----------------------------------------
+*/
+function buildController(name,options) {
+    if (options) {
+      if (!options.all) {
+        name = name.replace('controller','')
+        name = name.replace('Controller','')
+        name = (name[0].toUpperCase()) + (name.substr(1).toLowerCase()) + 'Controller'
+      }
+    }
+    fs.writeFile(
+      // Filepath
+      __dirname + '/Models/Controllers/' + name +'.js',
+      // Filedata
+      '"use strict"\n'+
+      'class '+name+' extends require("./Controller") {\n'+
+      '  constructor() {\n'+
+      '    super()\n'+
+      '  }\n'+
+      '\n'+
+      '  index(req,callback) {\n'+
+      '    var title = ""\n'+
+      '    callback(null,{ title:title })\n'+
+      '  }\n'+
+      '\n'+
+      '}\n'+
+      '\n'+
+      'module.exports = '+name+'\n'+
+      '\n'+
+      'module.exports.create = new '+name+'()',
+      // Filetype
+      'utf8'
+    )
+    console.log(('Successfully created '+name+'.js!').green)
+  }
+function buildRoute(name,options) {
+    var route_name = name
+    if (options) {
+      if (!options.all) {
+        name = name.replace('route','')
+        name = name.replace('Route','')
+        name = (name[0].toUpperCase()) + (name.substr(1).toLowerCase()) + 'Route'
+      }
+    }
+    // We make the directory for the jade file
+    exec('mkdir ' + __dirname + '/Views/' +(route_name),function(error,stdout,stderr){
+      fs.writeFile(
+        // Filepath
+        __dirname + '/Routes/' + name +'.js',
+        // Filedata
+        '/*\n'+
+        '|---------------------------------------------------\n'+
+        '| Route Dependencies\n'+
+        '|---------------------------------------------------\n'+
+        '*/\n'+
+        'var parseUrlencoded = require("body-parser").urlencoded({ extended:false }),\n'+
+        '  '+name+' = new require("../Models/Controllers/'+name+'").create,\n'+
+        '  router = require("express").Router()\n'+
+        '\n'+
+        '/*\n'+
+        '|---------------------------------------------------\n'+
+        '| Route Middleware\n'+
+        '|---------------------------------------------------\n'+
+        '*/\n'+
+        'router.use(function(req,res,next) {\n'+
+        '    next();\n'+
+        '});\n'+
+        '\n'+
+        '/*\n'+
+        '|---------------------------------------------------\n'+
+        '| Routes\n'+
+        '|---------------------------------------------------\n'+
+        '*/\n'+
+        'router.route("/")\n'+
+        '  /* Index */\n'+
+        '  .get(function(req,res) {\n'+
+        '\n'+
+        '    '+name+'.index(req,function(err,response) {\n'+
+        '\n'+
+        '      if (err) { res.json({ error:err })\n'+
+        '      } else {\n'+
+        '\n'+
+        '        res.render("'+(route_name).toLowerCase()+'/index",response)\n'+
+        '      }\n'+
+        '\n'+
+        '   })\n'+
+        '\n'+
+        '  })\n'+
+        '\n'+
+        'module.exports = router\n',
+        // Filetype
+        'utf8'
+      )
+      fs.writeFile(
+        // Filepath
+        __dirname + '/Views/' + (route_name) +'/index.jade',
+        // Filedata
+        'extends ../layouts/master\n'+
+        '\n'+
+        'block navbar\n'+
+        '\n'+
+        'block content\n'+
+        '\n'+
+        'block js\n',
+        // Filetype
+        'utf8'
+      )
+      buildController(route_name,options)
+      console.log(('Successfully created '+(route_name[0].toUpperCase()) + (route_name.substr(1).toLowerCase())+'Route.js and '+route_name+'/index.jade!').green)
+    })
+  }
+
+program
+  .command('make:controller [name]')
+  .option('-a,--all','Allow all names')
+  .action(buildController)
+
+program
+  .command('make:route [name]')
+  .option('-a,--all','Allow all names')
+  .action(buildRoute)
+
+
+/*
+|-----------------------------------------
+| Module Wildcards
+|-----------------------------------------
+*/
+program
+  .command('*')
+  .action(displayCommandError)
+
+program.parse(process.argv)
+
+if (!program.args.length) program.help()

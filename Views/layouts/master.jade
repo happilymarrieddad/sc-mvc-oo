@@ -1,0 +1,20 @@
+doctype
+html
+	head
+		title= title || 'Home Page'
+		link(rel='stylesheet',href='/css/bootswatch-customer.min.css')
+		link(rel='stylesheet',href='/css/master.css')
+
+	body
+
+		block navbar
+
+		div.container
+			div.row
+				div.col-md-12
+					block content
+
+		script(src='/js/libraries/jquery.min.js')
+		script(src='/js/libraries/bootstrap.min.js')
+
+		block js
